@@ -18,7 +18,7 @@ async def login(username, password):  # authorize to account
         return
 
 
-async def comment_usernames_to_post(auth, user_to_get):  # Get user followers
+async def comment_usernames_to_post(auth, user_to_get, comments_to_photo):  # Get user followers
     try:
         # Получить список подписок
         ig_client = await login(auth['username'], auth['password'])
@@ -27,7 +27,7 @@ async def comment_usernames_to_post(auth, user_to_get):  # Get user followers
         next_max_id = None
 
         a = requests.get(
-            'https://api.instagram.com/oembed/?url={}'.format('https://www.instagram.com/p/B230947AkEl/'))
+            'https://api.instagram.com/oembed/?url={}'.format(comments_to_photo))
         media_id = a.json()['media_id']
 
         while True:
@@ -43,18 +43,18 @@ async def comment_usernames_to_post(auth, user_to_get):  # Get user followers
                 comment_nicknames = []
                 for profile in range(len(followers)):
                     followers_profile = followers[profile]
-                    folower_username = followers_profile['username']
+                    follower_username = followers_profile['username']
 
-                    comment_nicknames.append('@{}'.format(folower_username))
+                    comment_nicknames.append('@{}'.format(follower_username))
                     if len(comment_nicknames) == 5:  # todo
                         comment = '{} Sorry for this'.format(' '.join(comment_nicknames))
 
                         ig_client.post_comment(media_id, comment)
                         comment_nicknames = []
-                        time.sleep(3)
+                        time.sleep(15)
 
             except Exception as err:
-                print('[E] При поптыке сохранить username пользователей в БД\n ERROR: {}'.format(err))
+                print('[E] При поптыке поставить коммент под фоткой\n ERROR: {}'.format(err))
                 continue
 
             if not next_max_id:
@@ -69,10 +69,11 @@ async def start():  # Get username and password by terminal
     username = input('Please, put your username here >>> ')
     password = getpass.getpass('Please put your password here >>> ')
     user_to_get = input('Please, write username of who you want to get followers >>> ')
+    comments_to_photo = input('Please, put photo link >>> ')
 
     auth = {'username': username, 'password': password}
 
-    await comment_usernames_to_post(auth, user_to_get)
+    await comment_usernames_to_post(auth, user_to_get, comments_to_photo)
 
 
 if __name__ == '__main__':
